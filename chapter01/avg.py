@@ -2,22 +2,21 @@ import numpy as np
 
 
 if __name__ == "__main__":
-    np.random.seed(0)
+    rng: np.random.Generator = np.random.default_rng(seed=0)
 
-    rewards = []
+    """
+    rewards: list[float] = []
     for n in range(1, 11):
-        reward = np.random.rand()
+        reward: float = rng.random()
         rewards.append(reward)
-        Q = sum(rewards) / n
+        Q: float = sum(rewards) / n
         print(Q)
     print()
+    """
 
-
-    np.random.seed(0)
-
-    Q = 0
+    Q: float = 0
     for n in range(1, 11):
-        reward = np.random.rand()
+        reward: float = rng.random()
         Q += (reward - Q) / n
         print(Q)
     print()
