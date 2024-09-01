@@ -33,7 +33,7 @@ if __name__ == "__main__":
     epsilons: list[float] = [0.1, 0.3, 0.01]
     runs: int = 200
     steps: int = 1000
-    all_rates_by_epsilon: np.ndarray = np.zeros((len(epsilons), runs, steps))
+    all_rates_by_epsilon: np.ndarray = np.zeros((len(epsilons), steps))
 
     for i, epsilon in enumerate(epsilons):
         all_rates: np.ndarray = np.zeros((runs, steps))
