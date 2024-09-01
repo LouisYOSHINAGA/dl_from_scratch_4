@@ -1,59 +1,57 @@
 import numpy as np
+from typing import Literal
 import matplotlib.pyplot as plt
 from bandit import Agent
 
 
 class NonStatBandit:
-    def __init__(self, arms=10):
-        self.arms = arms
-        self.rates = np.random.rand(arms)
+    def __init__(self, arms: int =10) -> None:
+        self.rng: np.random.Generator = np.random.default_rng()
+        self.arms: int = arms
+        self.rates: float = self.rng.random(arms)
 
-    def play(self, arm):
-        rate = self.rates[arm]
-        self.rates += 0.1 * np.random.randn(self.arms)
-        if rate > np.random.rand():
-            return 1
-        else:
-            return 0
+    def play(self, arm: int) -> Literal[0, 1]:
+        rate: Literal[0, 1] = self.rates[arm]
+        self.rates += 0.1 * self.rng.standard_normal(self.arms)
+        return 1 if self.rng.random() < rate else 0
 
 
 class AlphaAgent:
-    def __init__(self, epsilon, alpha, actions=10):
-        self.epsilon = epsilon
-        self.Qs = np.zeros(actions)
-        self.alpha = alpha
+    def __init__(self, epsilon: float, alpha: float, actions: int =10) -> None:
+        self.rng: np.random.Generator = np.random.default_rng()
+        self.epsilon: float = epsilon
+        self.Qs: np.ndarray = np.zeros(actions)
+        self.alpha: float = alpha
 
-    def update(self, action, reward):
-        self.Qs[action] += (reward - self.Qs[action]) * self.alpha
+    def update(self, action: int, reward: Literal[0, 1]) -> None:
+        self.Qs[action] += self.alpha * (reward - self.Qs[action])
 
-    def get_action(self):
-        if np.random.rand() < self.epsilon:
-            return np.random.randint(0, len(self.Qs))
-        return np.argmax(self.Qs)
+    def get_action(self) -> int:
+        return self.rng.integers(len(self.Qs)) if self.rng.random() < self.epsilon \
+               else np.argmax(self.Qs)
 
 
 if __name__ == "__main__":
-    runs = 200
-    steps = 1000
+    runs: int = 200
+    steps: int = 1000
+    epsilon: float = 0.1
+    alpha: float = 0.8
 
-    epsilon = 0.1
-    alpha = 0.8
-
-    results = {}
+    results: dict[str, np.ndarray] = {}
     for agent_type in ["sample average", "alpha const average"]:
-        all_rates = np.zeros((runs, steps))
+        all_rates: np.ndarray = np.zeros((runs, steps))
         for run in range(runs):
             bandit = NonStatBandit()
             if agent_type == "sample average":
                 agent = Agent(epsilon)
             elif agent_type == "alpha const average":
                 agent = AlphaAgent(epsilon, alpha)
-            total_reward = 0
 
-            rates = []
+            total_reward: int = 0
+            rates: list[float] = []
             for step in range(steps):
-                action = agent.get_action()
-                reward = bandit.play(action)
+                action: int = agent.get_action()
+                reward: Literal[0, 1] = bandit.play(action)
                 agent.update(action, reward)
                 total_reward += reward
                 rates.append(total_reward / (step+1))
