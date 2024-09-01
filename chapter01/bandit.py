@@ -88,3 +88,30 @@ if __name__ == "__main__":
     plt.ylabel("rates")
     plt.plot(rates)
     plt.show()
+
+
+    # fig. 1-14
+    runs: int = 10
+    steps: int = 1000
+    all_rates: np.ndarray = np.zeros((runs, steps))
+
+    for run in range(runs):
+        bandit = Bandit()
+        agent = Agent(epsilon=0.1)
+
+        total_reward: int = 0
+        total_rewards: list[int] = []
+        rates: float = []
+
+        for step in range(steps):
+            action: int = agent.get_action()
+            reward: Literal[0, 1] = bandit.play(action)
+            agent.update(action, reward)
+            total_reward += reward
+            all_rates[run, step] = total_reward / (step+ 1)
+
+    plt.xlabel("steps")
+    plt.ylabel("rates")
+    for rates in all_rates:
+        plt.plot(rates)
+    plt.show()
