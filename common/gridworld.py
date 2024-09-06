@@ -1,11 +1,11 @@
 import numpy as np
-import gridworld_render as render_helper
+import common.gridworld_render as render_helper
 
 from typing import TypeAlias, Literal, Generator
 
 State: TypeAlias = tuple[int, int]  # s
 Action: TypeAlias = Literal[0, 1, 2, 3]  # a
-Policy: TypeAlias = list[Action]  # pi(a|s)
+Policy: TypeAlias = dict[State, tuple[Action, float]]  # pi(a|s)
 Reward: TypeAlias = int  # r(s,a,s')
 StateValueFunction: TypeAlias = dict[State, float]  # v(s)
 ActionValueFunction: TypeAlias = dict[tuple[State, Action], float]  # q(s,a)
@@ -53,10 +53,10 @@ class GridWorld:
     def next_state(self, state: State, action: Action) -> State:
         action_move_map: list[tuple[int, int]] = [(-1, 0), (1, 0), (0, -1), (0, 1)]
         move: tuple[int, int] = action_move_map[action]
-        next_state: State = state + move
+        next_state: State = tuple(s + m for s, m in zip(state, move))
 
-        if next_state[0] < 0 or self.width <= next_state[0] \
-           or next_state[1] < 0 or self.height <= next_state[1]:
+        if next_state[0] < 0 or self.height <= next_state[0] \
+           or next_state[1] < 0 or self.width <= next_state[1]:
             next_state = state
         elif next_state == self.wall_state:
             next_state = state
