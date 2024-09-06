@@ -2,26 +2,31 @@ from typing import TypeAlias, Literal
 
 State: TypeAlias = Literal["L1", "L2"]
 Action: TypeAlias = Literal["left", "right"]
+Policy: TypeAlias = dict[tuple[State, Action], float]
+Reward: TypeAlias = float
+RewardFunction: TypeAlias = dict[tuple[State, Action, State], Reward]
+DiscountRate: TypeAlias = float
+StateValueFunction: TypeAlias = dict[State, float]
 
 
 states: list[State] = ["L1", "L2"]  # states: s
 actions: list[Action] = ["left", "right"]  # actions: a
 
-pi: dict[tuple[State, Action], float] = {
-    # state transition probability: p(s'|s,a)
+pi: Policy = {
+    # policy: p(a|s)
     ("L1", "left"): 0.5, ("L1", "right"): 0.5,
     ("L2", "left"): 0.5, ("L2", "right"): 0.5,
 }
 # state transition is deterministic: p(s'|s,a) -> s' = f(s,a)
-r: dict[tuple[State, Action, State], float] = {
+r: RewardFunction = {
     # reward function: r(s,a,s')
     ("L1", "left", "L1"): -1, ("L1", "right", "L2"): +1,
     ("L2", "left", "L1"):  0, ("L2", "right", "L2"): -1,
 }
-gamma: float = 0.9  # discount rate: gamma
+gamma: DiscountRate = 0.9  # discount rate: gamma
 
-V: dict[State, float] = {"L1": 0.0, "L2": 0.0}  # state value function: V_{k}(s)
-new_V: dict[State, float] = V.copy()  # state value function: V_{k+1}(s)
+V: StateValueFunction = {"L1": 0.0, "L2": 0.0}  # state value function: V_{k}(s)
+new_V: StateValueFunction = V.copy()  # state value function: V_{k+1}(s)
 
 
 if __name__ == "__main__":
