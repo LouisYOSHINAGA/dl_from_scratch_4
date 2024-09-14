@@ -20,8 +20,7 @@ def plot_regression(x: t.Tensor, y: t.Tensor, W: t.Tensor|None =None, b: t.Tenso
             plt.plot(reg_x, reg_y, color=plt.get_cmap("tab10")(1))
     plt.show()
 
-
-if __name__ == "__main__":
+def main() -> None:
     x: t.Tensor = t.rand(100, 1)
     y: t.Tensor = 5 + 2 * x + t.rand(100, 1)  # y = b + W * x + noise
     plot_regression(x, y)  # fig. 7-5
@@ -51,3 +50,7 @@ if __name__ == "__main__":
     print(f"W = {W.item()}")
     print(f"b = {b.item()}")
     plot_regression(x, y, W, b)  # fig. 7-9
+
+
+if __name__ == "__main__":
+    main()

@@ -4,8 +4,7 @@ import torch as t
 def rosenbrock(x0: t.Tensor, x1: t.Tensor) -> t.Tensor:
     return 100 * (x1 - x0**2)**2 + (x0 - 1)**2
 
-
-if __name__ == "__main__":
+def main() -> None:
     x0: t.Tensor = t.tensor(0.0, requires_grad=True)
     x1: t.Tensor = t.tensor(2.0, requires_grad=True)
 
@@ -26,3 +25,7 @@ if __name__ == "__main__":
         x1.grad.zero_()
 
     print(f"{x0=}, {x1=}")
+    
+
+if __name__ == "__main__":
+    main()
