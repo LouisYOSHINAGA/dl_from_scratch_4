@@ -1,6 +1,7 @@
 import numpy as np
 import torch as t
 import torch.nn.functional as F
+from typing import Any
 
 
 def gen_data() -> tuple[t.Tensor, t.Tensor]:
@@ -24,6 +25,12 @@ def predict(x: t.Tensor, W1: t.Tensor, b1: t.Tensor, W2: t.Tensor, b2: t.Tensor)
     x = F.linear(x, W2, b2)
     return x
 
+def update(lr: float, *args: tuple[Any]) -> None:
+    with t.no_grad():
+        for arg in args:
+            arg -= lr * arg.grad
+            arg.grad.zero_()
+
 def main() -> None:
     lr: float = 0.2
     iters: int = 10000
@@ -35,20 +42,10 @@ def main() -> None:
         y_pred: t.Tensor = predict(x, W1, b1, W2, b2)
         loss: t.Tensor = F.mse_loss(y_pred, y)
         loss.backward()
+        update(lr, W1, b1, W2, b2)
 
-        with t.no_grad():
-            W1 -= lr * W1.grad
-            b1 -= lr * b1.grad
-            W2 -= lr * W2.grad
-            b2 -= lr * b2.grad
-
-        W1.grad.zero_()
-        b1.grad.zero_()
-        W2.grad.zero_()
-        b2.grad.zero_()
-
-        if i % 1000 == 0:
-            print(f"{loss.item()=}")
+        if (i + 1) % 1000 == 0:
+            print(f"[iter{i:04d}] loss = {loss.item():.5f}")
 
 
 if __name__ == "__main__":
