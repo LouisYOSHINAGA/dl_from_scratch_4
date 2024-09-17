@@ -1,68 +1,78 @@
-import sys
-sys.path.append("..")
+if "__file__" in globals():
+    import sys, os
+    sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 import numpy as np
 from collections import defaultdict
 from common.gridworld import GridWorld
 
+from typing import TypeAlias, Literal
+State: TypeAlias = tuple[int, int]  # s
+Action: TypeAlias = Literal[0, 1, 2, 3]  # a
+Policy: TypeAlias = dict[State, dict[Action, float]]  # pi(a|s)
+Reward: TypeAlias = float  # r
+DiscountRate: TypeAlias = float  # gamma
+ActionValueFunction: TypeAlias = dict[Action, float]  # Q(s,a)
+
 
 class McAgent:
-    def __init__(self):
-        self.gamma = 0.9
-        self.epsilon = 0.1
-        self.alpha = 0.1
-        self.action_size = 4
+    def __init__(self) -> None:
+        self.rng: np.random.Generator = np.random.default_rng()
+        self.gamma: DiscountRate = 0.9  # gamma
+        self.actions: list[Action] = [0, 1, 2, 3]  # A
+        self.action_size: int = len(self.actions)  # |A|
 
-        random_actions = {0: 0.25, 1: 0.25, 2: 0.25, 3: 0.25}
-        self.pi = defaultdict(lambda: random_actions)
-        self.Q = defaultdict(lambda: 0)
-        self.memory = []
+        self.pi: Policy = defaultdict(lambda: {action: 1/self.action_size for action in self.actions})
+        self.Q: ActionValueFunction = defaultdict(lambda: 0)  # Q(s,a)
 
-    def get_action(self, state):
-        action_probs = self.pi[state]
-        actions = list(action_probs.keys())
-        probs = list(action_probs.values())
-        return np.random.choice(actions, p=probs)
+        self.alpha: float = 0.1
+        self.epsilon: float = 0.1
+        self.memory: list[tuple[State, Action, Reward]] = []
 
-    def add(self, state, action, reward):
-        data = (state, action, reward)
-        self.memory.append(data)
+    def get_action(self, state: State) -> Action:
+        action_probs: dict[Action, float] = self.pi[state]
+        return self.rng.choice(list(action_probs.keys()), p=list(action_probs.values()))
 
-    def reset(self):
+    def add(self, state: State, action: Action, reward: Reward) -> None:
+        self.memory.append((state, action, reward))
+
+    def update(self) -> None:
+        G: float = 0
+        for state, action, reward in reversed(self.memory):
+            G = reward + self.gamma * G
+            self.Q[(state, action)] += self.alpha * (G - self.Q[(state, action)])
+            self.pi[state] = greedy_probs(Q=self.Q, state=state, actions=self.actions, epsilon=self.epsilon)
+
+    def reset(self) -> None:
         self.memory.clear()
 
-    def update(self):
-        G = 0
-        for data in reversed(self.memory):
-            state, action, reward = data
-            G = self.gamma * G + reward
-            key = (state, action)
-            self.Q[key] += (G - self.Q[key]) * self.alpha
-            self.pi[state] = greedy_probs(self.Q, state, self.epsilon)
 
-
-def greedy_probs(Q, state, epsilon=0, action_size=4):
-    qs = [Q[(state, action)] for action in range(action_size)]
-    max_action = np.argmax(qs)
-    base_prob = epsilon / action_size
-    action_probs = {action: base_prob for action in range(action_size)}
+def greedy_probs(Q: ActionValueFunction, state: State, actions: list[Action], epsilon: float =0) -> dict[Action, float]:
+    max_action: Action = np.argmax([Q[(state, action)] for action in actions])
+    action_probs: dict[Action, float] = {action: epsilon/len(actions) for action in actions}
     action_probs[max_action] += (1 - epsilon)
     return action_probs
 
 
-if __name__ == "__main__":
+def main() -> None:
     env = GridWorld()
     agent = McAgent()
 
-    episodes = 10000
-    for episode in range(episodes):
-        state = env.reset()
+    episodes: int = 10000
+    for _ in range(episodes):
+        state: State = env.reset()
         agent.reset()
+
         while True:
-            action = agent.get_action(state)
+            action: Action = agent.get_action(state)
             next_state, reward, done = env.step(action)
             agent.add(state, action, reward)
             if done:
                 agent.update()
                 break
             state = next_state
+
     env.render_q(agent.Q)
+
+
+if __name__ == "__main__":
+    main()
