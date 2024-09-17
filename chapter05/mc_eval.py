@@ -8,21 +8,21 @@ from common.gridworld import GridWorld
 from typing import TypeAlias, Literal
 State: TypeAlias = tuple[int, int]  # s
 Action: TypeAlias = Literal[0, 1, 2, 3]  # a
-Policy: TypeAlias = dict[State, tuple[Action, float]]  # pi(a|s)
+Policy: TypeAlias = dict[State, dict[Action, float]]  # pi(a|s)
 Reward: TypeAlias = float  # r
 DiscountRate: TypeAlias = float  # gamma
 StateValueFunction: TypeAlias = dict[State, float]  # v(s)
 
 
 class RandomAgent:
-    def __init__(self):
+    def __init__(self) -> None:
         self.rng: np.random.Generator = np.random.default_rng()
         self.gamma: DiscountRate = 0.9  # gamma
         self.actions: list[Action] = [0, 1, 2, 3]  # A
         self.action_size: int = len(self.actions)  # |A|
 
-        self.pi: Policy = defaultdict(lambda: {action: 1/self.action_size for action in self.actions})
-        self.V: StateValueFunction = defaultdict(lambda: 0)
+        self.pi: Policy = defaultdict(lambda: {action: 1/self.action_size for action in self.actions})  # pi(a|s)
+        self.V: StateValueFunction = defaultdict(lambda: 0)  # V(s)
 
         self.cnts: dict[State, int] = defaultdict(lambda: 1)
         self.memory: list[tuple[State, Action, Reward]] = []
@@ -45,12 +45,12 @@ class RandomAgent:
         self.memory.clear()
 
 
-if __name__ == "__main__":
+def main() -> None:
     env = GridWorld()
     agent = RandomAgent()
 
     episodes: int = 1000
-    for episode in range(episodes):
+    for _ in range(episodes):
         state: State = env.reset()
         agent.reset()
 
@@ -63,3 +63,7 @@ if __name__ == "__main__":
                 break
             state = next_state
     env.render_v(agent.V)
+
+
+if __name__ == "__main__":
+    main()
