@@ -1,6 +1,7 @@
 import numpy as np
 import torch as t
 import torch.nn as nn
+import torch.optim as optim
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
 from typing import Any
@@ -118,7 +119,31 @@ def main_model() -> None:
     pred_x, pred_y = inference_model(model)
     plot_data(x, y, pred_x, pred_y)  # fig. 7-12
 
+def main_opt() -> None:
+    lr: float = 0.2
+    iters: int = 10000
+
+    x, y = gen_data()
+    plot_data(x, y)  # fig. 7-10
+
+    model = TwoLayerNet(in_size=1, hidden_size=10, out_size=1)
+    opt = optim.SGD(model.parameters(), lr=lr)
+
+    for i in range(iters):
+        opt.zero_grad()
+        pred_y: t.Tensor = model(x)
+        loss: t.Tensor = F.mse_loss(pred_y, y)
+        loss.backward()
+        opt.step()
+
+        if (i + 1) % 1000 == 0:
+            print(f"[iter{i:04d}] loss = {loss.item():.5f}")
+
+    pred_x, pred_y = inference_model(model)
+    plot_data(x, y, pred_x, pred_y)  # fig. 7-12
+
 
 if __name__ == "__main__":
     # main()
-    main_model()
+    # main_model()
+    main_opt()
