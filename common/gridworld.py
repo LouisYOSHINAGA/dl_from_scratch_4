@@ -44,7 +44,7 @@ class GridWorld:
         return self.action_space
 
     # s
-    def states(self) -> Generator[tuple[int, int], None, None]:
+    def states(self) -> Generator[State, None, None]:
         for h in range(self.height):
             for w in range(self.width):
                 yield (h, w)
