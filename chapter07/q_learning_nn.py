@@ -6,12 +6,12 @@ import torch as t
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
-
 from common.gridworld import GridWorld
 
 from typing import TypeAlias, Literal
-State: TypeAlias = tuple[int, int]|t.Tensor
-Action: TypeAlias = Literal[0, 1, 2, 3]|t.Tensor
+State: TypeAlias = tuple[int, int]
+StateOneHot: TypeAlias = t.Tensor
+Action: TypeAlias = Literal[0, 1, 2, 3]
 Reward: TypeAlias = float
 DiscountRate: TypeAlias = float
 
@@ -22,68 +22,67 @@ class QNet(nn.Module):
         self.l1: nn.Module = nn.Linear(in_size, hidden_size)
         self.l2: nn.Module = nn.Linear(hidden_size, out_size)
 
-    def forward(self, x: t.Tensor) -> t.Tensor:
+    def forward(self, x: StateOneHot) -> t.Tensor:
         x = F.relu(self.l1(x))
         x = self.l2(x)
         return x
 
 class QLearningAgent:
-    def __init__(self, state_size: int, hidden_size: int) -> None:
+    def __init__(self, width: int, height: int, actions: list[Action], hidden_size: int) -> None:
         self.rng: np.random.Generator = np.random.default_rng()
         self.gamma: DiscountRate = 0.9
-        self.lr: float = 0.01
+        self.lr: float = 0.001
         self.epsilon: float = 0.1
 
-        self.actions: t.Tensor = t.Tensor([0, 1, 2, 3])
-        self.action_size: int = len(self.actions)
+        self.width: int = width
+        self.height: int = height
+        self.actions: t.Tensor = t.tensor(actions, dtype=t.float32)
 
-        self.qnet = QNet(in_size=state_size, hidden_size=hidden_size, out_size=self.action_size)
+        self.qnet = QNet(in_size=width*height, hidden_size=hidden_size, out_size=len(self.actions))
         self.opt = optim.SGD(self.qnet.parameters(), lr=self.lr)
+
+    def onehot(self, state: State) -> StateOneHot:
+        h, w = state
+        vec: t.Tensor = t.zeros(self.width*self.height, dtype=t.float32)
+        vec[h * self.width + w] = 1
+        return vec.unsqueeze(dim=0)
 
     def get_action(self, state: State) -> Action:
         if self.rng.random() < self.epsilon:
-            return t.multinomial(self.actions, 1)
+            return t.multinomial(self.actions, 1).item()
         else:
-            qs: t.Tensor = self.qnet(state)
-            return t.argmax(qs).item()
+            qs: t.Tensor = self.qnet(self.onehot(state))
+            return qs.argmax().item()
 
     def update(self, state: State, action: Action, reward: Reward, next_state: State, done: bool) -> float:
         with t.no_grad():
-            next_q: t.Tensor = t.zeros(1) if done else t.max(self.qnet(next_state), dim=1)[0]
-        target = reward + self.gamma * next_q
-        qs: t.Tensor = self.qnet(state)
-        loss: t.Tensor = F.mse_loss(target, qs[:, action])
+            next_q: t.Tensor = t.max(self.qnet(self.onehot(next_state)), dim=1)[0]
+        target: t.Tensor = reward + (1 - int(done)) * self.gamma * next_q
+        qs: t.Tensor = self.qnet(self.onehot(state))
+        loss: t.Tensor = F.mse_loss(qs[:, action], target)
 
+        self.opt.zero_grad()
         loss.backward()
         self.opt.step()
-        self.opt.zero_grad()
         return loss.item()
-
-
-def onehot(state: State, width: int, height: int) -> t.Tensor:
-    x, y = state
-    vec: t.Tensor = t.zeros(height*width, dtype=t.float32)
-    vec[y * width + x] = 1
-    return vec[np.newaxis, :]
 
 
 def main() -> None:
     env = GridWorld()
-    agent = QLearningAgent(env.width*env.height, hidden_size=100)
+    agent = QLearningAgent(width=env.width, height=env.height, actions=[0, 1, 2, 3], hidden_size=100)
 
-    episodes: int = 1000
+    episodes: int = 100
     loss_history: list[float] = []
     for episode in range(episodes):
         total_loss: float = 0
         cnt: int = 0
 
-        state: State = onehot(env.reset(), width=env.width, height=env.height)
+        state: State = env.reset()
         done: bool = False
 
         while not done:
             action: Action = agent.get_action(state)
             next_state, reward, done = env.step(action)
-            next_state = onehot(next_state, width=env.width, height=env.height)
             loss: float = agent.update(state, action, reward, next_state, done)
 
             total_loss += loss
@@ -91,7 +90,7 @@ def main() -> None:
             state = next_state
 
         loss_history.append(total_loss / cnt)
-        if episode % 100 == 0:
+        if episode % 10 == 0:
             print(loss_history[-1])
 
 
