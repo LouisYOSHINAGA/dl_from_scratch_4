@@ -40,10 +40,14 @@ def value_iter(V: StateValueFunction, env: GridWorld, gamma: DiscountRate,
     return V
 
 
-if __name__ == "__main__":
+def main() -> None:
     env = GridWorld()
     gamma: DiscountRate = 0.9
     V: StateValueFunction = defaultdict(lambda: 0)
     V = value_iter(V, env, gamma)
     pi: Policy = greedy_policy(V, env, gamma)
     env.render_v(V, pi)
+
+
+if __name__ == "__main__":
+    main()

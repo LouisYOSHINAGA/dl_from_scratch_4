@@ -44,7 +44,7 @@ def policy_eval(pi: Policy, V: StateValueFunction, env: GridWorld, gamma: Discou
     return V
 
 
-if __name__ == "__main__":
+def main() -> None:
     """
     env = GridWorld()
     V = {}
@@ -71,3 +71,7 @@ if __name__ == "__main__":
     V: StateValueFunction = defaultdict(lambda: 0)
     V = policy_eval(pi, V, env, gamma)
     env.render_v(V, pi)
+
+
+if __name__ == "__main__":
+    main()

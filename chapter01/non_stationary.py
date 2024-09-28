@@ -31,7 +31,7 @@ class AlphaAgent:
                else np.argmax(self.Qs)
 
 
-if __name__ == "__main__":
+def main() -> None:
     runs: int = 200
     steps: int = 1000
     epsilon: float = 0.1
@@ -65,3 +65,7 @@ if __name__ == "__main__":
         plt.plot(avg_rates, label=agent_type)
     plt.legend()
     plt.show()
+
+
+if __name__ == "__main__":
+    main()

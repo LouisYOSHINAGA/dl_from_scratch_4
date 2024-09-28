@@ -28,7 +28,7 @@ class Agent:
                else np.argmax(self.Qs)
 
 
-if __name__ == "__main__":
+def main() -> None:
     """
     # rewards (0-th machine)
     bandit = Bandit()
@@ -115,3 +115,7 @@ if __name__ == "__main__":
     for rates in all_rates:
         plt.plot(rates)
     plt.show()
+
+
+if __name__ == "__main__":
+    main()

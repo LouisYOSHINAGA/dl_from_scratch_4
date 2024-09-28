@@ -53,7 +53,11 @@ def policy_iter(env: GridWorld, gamma: DiscountRate, threshold: float =0.001, is
     return pi
 
 
-if __name__ == "__main__":
+def main() -> None:
     env = GridWorld()
     gamma: DiscountRate= 0.9
     pi: Policy = policy_iter(env, gamma, is_render=True)
+
+
+if __name__ == "__main__":
+    main()
