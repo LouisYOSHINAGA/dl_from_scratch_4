@@ -15,6 +15,7 @@ StateOneHot: TypeAlias = t.Tensor
 Action: TypeAlias = Literal[0, 1, 2, 3]
 Reward: TypeAlias = float
 DiscountRate: TypeAlias = float
+ActionValueFunction: TypeAlias = dict[tuple[State, Action], float]
 
 
 class QNet(nn.Module):
@@ -67,6 +68,15 @@ class QLearningAgent:
         self.opt.step()
         return loss.item()
 
+    def get_q(self) -> ActionValueFunction:
+        qss: ActionValueFunction = {}
+        for h in range(self.height):
+            for w in range(self.width):
+                state: State = (h, w)
+                for action, q in zip(self.actions, self.qnet(self.onehot(state))[0]):
+                    qss[(state, action.item())] = q.item()
+        return qss
+
 
 def plot_loss(history: list[float]) -> None:
     plt.figure(figsize=(8, 5))
@@ -100,7 +110,9 @@ def main() -> None:
             state = next_state
 
         loss_history.append(total_loss / cnt)
-    plot_loss(loss_history)
+
+    plot_loss(loss_history)  # fig. 7-14
+    env.render_q(agent.get_q())  # fig. 7-15
 
 
 if __name__ == "__main__":
