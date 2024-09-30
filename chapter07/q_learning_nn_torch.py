@@ -7,6 +7,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 from common.gridworld import GridWorld
+import matplotlib.pyplot as plt
 
 from typing import TypeAlias, Literal
 State: TypeAlias = tuple[int, int]
@@ -31,12 +32,12 @@ class QLearningAgent:
     def __init__(self, width: int, height: int, actions: list[Action], hidden_size: int) -> None:
         self.rng: np.random.Generator = np.random.default_rng()
         self.gamma: DiscountRate = 0.9
-        self.lr: float = 0.001
+        self.lr: float = 0.01
         self.epsilon: float = 0.1
 
         self.width: int = width
         self.height: int = height
-        self.actions: t.Tensor = t.tensor(actions, dtype=t.float32)
+        self.actions: t.Tensor = t.tensor(actions, dtype=t.int32)
 
         self.qnet = QNet(in_size=width*height, hidden_size=hidden_size, out_size=len(self.actions))
         self.opt = optim.SGD(self.qnet.parameters(), lr=self.lr)
@@ -49,7 +50,7 @@ class QLearningAgent:
 
     def get_action(self, state: State) -> Action:
         if self.rng.random() < self.epsilon:
-            return t.multinomial(self.actions, 1).item()
+            return t.randint(len(self.actions), (1, )).item()
         else:
             qs: t.Tensor = self.qnet(self.onehot(state))
             return qs.argmax().item()
@@ -67,13 +68,22 @@ class QLearningAgent:
         return loss.item()
 
 
+def plot_loss(history: list[float]) -> None:
+    plt.figure(figsize=(8, 5))
+    plt.xlabel("episodes")
+    plt.ylabel("loss")
+    plt.plot(range(len(history)), history)
+    plt.tight_layout()
+    plt.show()
+
+
 def main() -> None:
     env = GridWorld()
     agent = QLearningAgent(width=env.width, height=env.height, actions=[0, 1, 2, 3], hidden_size=100)
 
-    episodes: int = 100
+    episodes: int = 1000
     loss_history: list[float] = []
-    for episode in range(episodes):
+    for _ in range(episodes):
         total_loss: float = 0
         cnt: int = 0
 
@@ -90,8 +100,7 @@ def main() -> None:
             state = next_state
 
         loss_history.append(total_loss / cnt)
-        if episode % 10 == 0:
-            print(loss_history[-1])
+    plot_loss(loss_history)
 
 
 if __name__ == "__main__":
