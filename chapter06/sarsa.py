@@ -17,7 +17,8 @@ ActionValueFunction: TypeAlias = dict[tuple[State, Action], ActionValue]
 
 
 class SarsaAgent:
-    def __init__(self):
+    def __init__(self) -> None:
+        self.rng: np.random.Generator = np.random.default_rng()
         self.gamma: DiscountRate = 0.9
         self.alpha: float = 0.8
         self.epsilon: float = 0.1
@@ -32,7 +33,7 @@ class SarsaAgent:
 
     def get_action(self, state: State) -> Action:
         action_probs: dict[Action, float] = self.pi[state]
-        return np.random.choice(list(action_probs.keys()), p=list(action_probs.values()))
+        return self.rng.choice(list(action_probs.keys()), p=list(action_probs.values()))
 
     def update(self, state: State, action: Action, reward: Reward, done: bool) -> None:
         self.memory.append((state, action, reward, done))
