@@ -1,3 +1,6 @@
+if "__file__" in globals():
+    import sys, os
+    sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 import numpy as np
 import common.gridworld_render as render_helper
 
@@ -87,7 +90,7 @@ class GridWorld:
         renderer.render_q(q, print_value)
 
 
-if __name__ == "__main__":
+def main() -> None:
     env = GridWorld()
     env.render_v()
 
@@ -96,3 +99,6 @@ if __name__ == "__main__":
     for state in env.states():
         V[state] = rng.standard_normal()
     env.render_v(V)
+
+if __name__ == "__main__":
+    main()
