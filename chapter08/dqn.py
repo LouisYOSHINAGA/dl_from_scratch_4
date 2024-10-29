@@ -16,6 +16,7 @@ Actions: TypeAlias = np.ndarray
 Reward: TypeAlias = float
 Rewards: TypeAlias = np.ndarray
 DiscountRate: TypeAlias = float
+Env: TypeAlias = gym.wrappers.time_limit.TimeLimit
 
 
 class QNet(dzr.Model):
@@ -80,10 +81,7 @@ def plot_rewards(rewards: list[Reward]) -> None:
     plt.plot(range(len(rewards)), rewards)
     plt.show()
 
-def main() -> None:
-    episodes: int = 300
-    sync_interval: int = 20
-
+def main(episodes: int =300, sync_interval: int =20, is_plot: bool =True, is_inference: bool =True) -> None:
     env: gym.wrappers.time_limit.TimeLimit = gym.make("CartPole-v0")
     agent = DQNAgent()
 
@@ -103,7 +101,35 @@ def main() -> None:
         if episode % sync_interval == 0:
             agent.sync_qnet()
         reward_history.append(total_reward)
-    plot_rewards(reward_history)
+
+    if is_plot:
+        plot_rewards(reward_history)
+    if is_inference:
+        inference(env, agent)
+    return reward_history
+
+def inference(env: Env, agent: DQNAgent) -> None:
+    agent.epsilon = 0
+    state: State = env.reset()
+    done: bool = False
+    total_reward: Reward = 0
+
+    while not done:
+        action: Action = agent.get_action(state)
+        next_state, reward, done, info = env.step(action)
+        state = next_state
+        total_reward += reward
+        env.render()
+    print(f"Total Reward: {total_reward}")
+
+def main_avg() -> None:
+    iters: int = 100
+    episodes: int = 300
+    reward_histories: np.ndarray = np.empty((iters, episodes))
+    for i in range(iters):
+        reward_histories[i] = main(episodes=episodes, is_plot=False, is_inference=False)
+    plot_rewards(reward_histories.mean(axis=0))
 
 if __name__ == "__main__":
     main()
+    # main_avg()
