@@ -26,28 +26,28 @@ class Policy(dzr.Model):
 
 
 class Agent:
-    def __init__(self, in_size: int, hidden_size: int, out_size: int, gamma: DiscountRate =0.98, lr: float =0.0002) -> None:
+    def __init__(self, in_size: int, hidden_size: int, out_size: int,
+                 gamma: DiscountRate =0.98, lr: float =0.0002) -> None:
         self.rng: np.random.Generator = np.random.default_rng()
         self.gamma: DiscountRate = gamma
-        self.lr: float = lr
 
         self.memory: list[tuple[Reward, float]] = []
         self.pi = Policy(in_size=in_size, hidden_size=hidden_size, out_size=out_size)
         self.opt = O.Adam(lr).setup(self.pi)
 
-    def get_action(self, state: State) -> tuple[Action, float]:
+    def get_action(self, state: State) -> tuple[Action, dzr.Variable]:
         probs: dzr.Variable = self.pi(state[np.newaxis, :])[0]
         action: Action = self.rng.choice(len(probs), p=probs.data)
         return action, probs[action]
 
-    def add(self, reward: Reward, prob: float) -> None:
+    def add(self, reward: Reward, prob: dzr.Variable) -> None:
         self.memory.append((reward, prob))
 
     def update(self) -> None:
         self.pi.cleargrads()
 
         G: float = 0
-        loss: float = 0
+        loss = dzr.Variable(np.array(0))
         for reward, prob in reversed(self.memory):
             G = reward + self.gamma * G
             loss -= G * F.log(prob)
@@ -91,7 +91,7 @@ def plot_rewards(reward_history: list[Reward]) -> None:
     plt.show()
 
 def main_avg() -> None:
-    iters: int = 3
+    iters: int = 100
     episodes: int = 3000
     reward_histories: np.ndarray = np.empty((iters, episodes))
     for i in range(iters):
